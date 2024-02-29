@@ -1,0 +1,47 @@
+<config-template xmlns="http://tail-f.com/ns/config/1.0">
+  <devices xmlns="http://tail-f.com/ns/ncs">
+    <device>
+      <name>{$DEVICE}</name>
+      <config>
+        <router xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-um-router-bgp-cfg">
+          <bgp>
+            <as>
+              <as-number>{$BGP_AS}</as-number>
+              <neighbors>
+                <neighbor>
+                  <neighbor-address>{$RR1_IPV4_ADDRESS}</neighbor-address>
+                  <address-families>
+                    <address-family>
+                      <af-name>ipv4-unicast</af-name>
+                    </address-family>
+                    <address-family>
+                      <af-name>vpnv4-unicast</af-name>
+                    </address-family>
+                  </address-families>
+                  <remote-as>{$BGP_AS}</remote-as>
+                  <update-source>Loopback0</update-source>
+                </neighbor>
+                <neighbor>
+                  <neighbor-address>{$RR2_IPV4_ADDRESS}</neighbor-address>
+                  <address-families>
+                    <address-family>
+                      <af-name>ipv4-unicast</af-name>
+                    </address-family>
+                    <address-family>
+                      <af-name>vpnv4-unicast</af-name>
+                    </address-family>
+                  </address-families>
+                  <remote-as>{$BGP_AS}</remote-as>
+                  <update-source>Loopback0</update-source>
+                </neighbor>
+              </neighbors>
+              <bgp>
+                <router-id>{$BGP_ROUTER_ID}</router-id>
+              </bgp>
+            </as>
+          </bgp>
+        </router>
+      </config>
+    </device>
+  </devices>
+</config-template>
