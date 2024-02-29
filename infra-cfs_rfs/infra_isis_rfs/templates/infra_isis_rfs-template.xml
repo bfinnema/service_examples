@@ -88,6 +88,96 @@
             </processes>
           </isis>
         </router>
+        <interface xmlns="http://tail-f.com/ned/cisco-ios-xr">
+          <Loopback>
+            <id>0</id>
+            <ipv4>
+              <address>
+                <ip>{$LOOPBACK0_IPV4_ADDRESS}</ip>
+                <mask>{$LOOPBACK0_IPV4_MASK}</mask>
+              </address>
+            </ipv4>
+          </Loopback>
+            <?if {$INTERFACE_NAME = 'TenGigE'}?>
+            <TenGigE>
+              <id>{$INTERFACE_NUMBER}</id>
+              <ipv4>
+                <address>
+                  <ip>{$IPV4_ADDRESS}</ip>
+                  <mask>{$IPV4_MASK}</mask>
+                </address>
+              </ipv4>
+            </TenGigE>
+          <?end?>
+            <?if {$INTERFACE_NAME = 'GigabitEthernet'}?>
+            <GigabitEthernet>
+              <id>{$INTERFACE_NUMBER}</id>
+              <ipv4>
+                <address>
+                  <ip>{$IPV4_ADDRESS}</ip>
+                  <mask>{$IPV4_MASK}</mask>
+                </address>
+              </ipv4>
+            </GigabitEthernet>
+          <?end?>
+        </interface>
+        <router xmlns="http://tail-f.com/ned/cisco-ios-xr">
+          <isis>
+            <tag>
+              <name>{$ISIS_PROCESS_ID}</name>
+              <is-type>level-2-only</is-type>
+              <net>
+                <id>{$NET_ID}</id>
+              </net>
+              <address-family>
+                <ipv4>
+                  <unicast/>
+                </ipv4>
+                <ipv6>
+                  <unicast/>
+                </ipv6>
+              </address-family>
+              <interface>
+                <name>Loopback0</name>
+                <address-family>
+                  <ipv4>
+                    <unicast/>
+                  </ipv4>
+                  <ipv6>
+                    <unicast/>
+                  </ipv6>
+                </address-family>
+              </interface>
+              <interface>
+                <name>{$INTERFACE_NAME}{$INTERFACE_NUMBER}</name>
+                <address-family>
+                  <ipv4>
+                    <unicast>
+                      <mpls>
+                        <ldp>
+                          <sync>
+                            <level>2</level>
+                          </sync>
+                        </ldp>
+                      </mpls>
+                    </unicast>
+                  </ipv4>
+                  <ipv6>
+                    <unicast>
+                      <mpls>
+                        <ldp>
+                          <sync>
+                            <level>2</level>
+                          </sync>
+                        </ldp>
+                      </mpls>
+                    </unicast>
+                  </ipv6>
+                </address-family>
+              </interface>
+            </tag>
+          </isis>
+        </router>
       </config>
     </device>
   </devices>

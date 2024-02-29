@@ -18,6 +18,17 @@
             </interfaces>
           </ldp>
         </mpls>
+        <mpls xmlns="http://tail-f.com/ned/cisco-ios-xr">
+          <ldp>
+            <log>
+              <neighbor/>
+            </log>
+            <router-id>{router_id}</router-id>
+            <interface>
+              <name>{interface_name}{interface_number}</name>
+            </interface>
+          </ldp>
+        </mpls>
       </config>
     </device>
   </devices>
