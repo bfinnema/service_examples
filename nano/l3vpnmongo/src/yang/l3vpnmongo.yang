@@ -1,0 +1,161 @@
+module l3vpnmongo {
+
+  namespace "http://example.com/l3vpnmongo";
+  prefix l3vpnmongo;
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+  import tailf-common {
+    prefix tailf;
+  }
+  import tailf-ncs {
+    prefix ncs;
+  }
+
+  description
+    "Service for L3 MPLS VPN provisioning";
+
+  revision 2023-11-03 {
+    description
+      "Building the nano version with manual vpn-id.";
+  }
+
+  revision 2020-06-04 {
+    description
+      "Initial revision.";
+  }
+
+  identity l3vpnmongo {
+    base ncs:plan-component-type;
+  }
+
+  identity l3vpnmongo-configured {
+    base ncs:plan-state;
+  }
+
+  identity id-allocated {
+    base ncs:plan-state;
+  }
+
+  ncs:service-behavior-tree l3vpnmongo-servicepoint {
+    description "L3 MPLS VPN behavior tree";
+    ncs:plan-outline-ref "l3vpnmongo:l3vpnmongo-plan";
+    ncs:selector {
+      ncs:create-component "'self'" {
+        ncs:component-type-ref "ncs:self";
+      }
+      ncs:create-component "'l3vpnmongo'" {
+        ncs:component-type-ref "l3vpnmongo:l3vpnmongo";
+      }
+    }
+  }
+
+  ncs:plan-outline l3vpnmongo-plan {
+    description "L3 MPLS VPN Plan";
+
+    ncs:component-type "ncs:self" {
+      ncs:state "ncs:init";
+      ncs:state "ncs:ready";
+    }
+    ncs:component-type "l3vpnmongo:l3vpnmongo" {
+      ncs:state "ncs:init";
+      ncs:state "l3vpnmongo:id-allocated" {
+        ncs:create {
+          ncs:nano-callback;
+        }
+      }
+      ncs:state "l3vpnmongo:l3vpnmongo-configured" {
+        ncs:create {
+          ncs:pre-condition {
+            ncs:monitor "/mongo-vpnid-alloc[vpn-name=$SERVICE/name]/vpn-id";
+          }
+          ncs:nano-callback;
+        }
+      }
+    }
+  }
+
+  list mongo-vpnid-alloc {
+    key "vpn-name";
+    unique "vpn-id";
+
+    leaf vpn-name {
+      type string;
+    }
+
+    leaf vpn-id {
+      type uint16;
+      tailf:info "Unique VPN ID";
+    }
+  }
+
+  list l3vpnmongo {
+    description "This is an RFS skeleton service";
+
+    key name;
+    leaf name {
+      tailf:info "Unique service id";
+      tailf:cli-allow-range;
+      type string;
+    }
+
+    uses ncs:service-data;
+    uses ncs:nano-plan-data;
+    ncs:servicepoint l3vpnmongo-servicepoint;
+
+    list link {
+      tailf:info "PE-CE Attachment Point";
+      key link-id;
+      min-elements 1;
+      leaf link-id {
+        tailf:info "Link ID (1 to 65535)";
+        type uint32 {
+          range "1..65535" {
+            error-message "Link ID is out of range, SHould be between 1 and 65535";
+          }
+        }
+      }
+      leaf device {
+        tailf:info "PE Router";
+        mandatory true;
+        type leafref {
+          path "/ncs:devices/ncs:device/ncs:name";
+        }
+        /* must "starts-with(current(),'PE')" {
+          error-message "Only PE devices can be selected";
+        } */
+      }
+      leaf routing-protocol {
+        tailf:info "Routing option for the PE-CE link.";
+        type enumeration {
+          enum bgp;
+          enum rip;
+        }
+        default bgp;
+      }
+      leaf pe-ip {
+        tailf:info "PE-CE Link IP address.";
+        type inet:ipv4-address;
+      }
+      leaf ce-ip {
+        tailf:info "CE Neighbor IP address.";
+        when "../routing-protocol='bgp'";
+        type inet:ipv4-address;
+      }
+      leaf rip-net {
+        tailf:info "IP Network for RIP.";
+        when "../routing-protocol='rip'";
+        type inet:ipv4-address;
+      }
+      leaf interface {
+        tailf:info "Customer Facing Interface";
+        mandatory true;
+        type string;
+        must "count(../../../l3vpnmongo[name != current()/../../name]/link[device = current()/../device]/interface = current()) = 0" {
+          error-message "Interface is already used for another link";
+        }
+      }
+    }
+  }
+}

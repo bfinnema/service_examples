@@ -1,0 +1,13 @@
+<ncs-package xmlns="http://tail-f.com/ns/ncs-packages">
+  <name>l3vpnmongo</name>
+  <package-version>1.0</package-version>
+  <description>Generated Python package</description>
+  <ncs-min-version>6.1</ncs-min-version>
+
+  <component>
+    <name>l3vpnmongo</name>
+    <application>
+      <python-class-name>l3vpnmongo.l3vpnmongo.L3VpnMongo</python-class-name>
+    </application>
+  </component>
+</ncs-package>

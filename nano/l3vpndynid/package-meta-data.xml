@@ -1,0 +1,18 @@
+<ncs-package xmlns="http://tail-f.com/ns/ncs-packages">
+  <name>l3vpndynid</name>
+  <package-version>1.0</package-version>
+  <description>L3 MPLS VPN with Dynamic VPN ID allocation using the resource-manager</description>
+  <ncs-min-version>6.1</ncs-min-version>
+
+  <component>
+    <name>l3vpndynid</name>
+    <application>
+      <python-class-name>l3vpndynid.l3vpndynid.L3VpnDynID</python-class-name>
+    </application>
+  </component>
+
+  <required-package>
+    <name>resource-manager</name>
+  </required-package>
+
+</ncs-package>

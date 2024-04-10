@@ -1,0 +1,147 @@
+module l3vpndynid {
+
+  namespace "http://example.com/l3vpndynid";
+  prefix l3vpndynid;
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+  import tailf-common {
+    prefix tailf;
+  }
+  import tailf-ncs {
+    prefix ncs;
+  }
+
+  description
+    "Service for L3 MPLS VPN provisioning";
+
+  revision 2023-11-03 {
+    description
+      "Building the nano version with manual vpn-id.";
+  }
+
+  revision 2020-06-04 {
+    description
+      "Initial revision.";
+  }
+
+  identity l3vpndynid {
+    base ncs:plan-component-type;
+  }
+
+  identity l3vpndynid-configured {
+    base ncs:plan-state;
+  }
+
+  identity id-allocated {
+    base ncs:plan-state;
+  }
+
+  ncs:service-behavior-tree l3vpndynid-servicepoint {
+    description "L3 MPLS VPN behavior tree";
+    ncs:plan-outline-ref "l3vpndynid:l3vpndynid-plan";
+    ncs:selector {
+      ncs:create-component "'self'" {
+        ncs:component-type-ref "ncs:self";
+      }
+      ncs:create-component "'l3vpndynid'" {
+        ncs:component-type-ref "l3vpndynid:l3vpndynid";
+      }
+    }
+  }
+
+  ncs:plan-outline l3vpndynid-plan {
+    description "L3 MPLS VPN Plan";
+
+    ncs:component-type "ncs:self" {
+      ncs:state "ncs:init";
+      ncs:state "ncs:ready";
+    }
+    ncs:component-type "l3vpndynid:l3vpndynid" {
+      ncs:state "ncs:init";
+      ncs:state "l3vpndynid:id-allocated" {
+        ncs:create {
+          ncs:nano-callback;
+        }
+      }
+      ncs:state "l3vpndynid:l3vpndynid-configured" {
+        ncs:create {
+          ncs:pre-condition {
+            ncs:monitor "/resource-pools/id-pool[name='vpn-id']/allocation[id=$SERVICE/name]/response/id";
+          }
+          ncs:nano-callback;
+        }
+      }
+    }
+  }
+
+  list l3vpndynid {
+    description "This is an RFS skeleton service";
+
+    key name;
+    leaf name {
+      tailf:info "Unique service id";
+      tailf:cli-allow-range;
+      type string;
+    }
+
+    uses ncs:service-data;
+    uses ncs:nano-plan-data;
+    ncs:servicepoint l3vpndynid-servicepoint;
+
+    list link {
+      tailf:info "PE-CE Attachment Point";
+      key link-id;
+      min-elements 1;
+      leaf link-id {
+        tailf:info "Link ID (1 to 65535)";
+        type uint32 {
+          range "1..65535" {
+            error-message "Link ID is out of range, SHould be between 1 and 65535";
+          }
+        }
+      }
+      leaf device {
+        tailf:info "PE Router";
+        mandatory true;
+        type leafref {
+          path "/ncs:devices/ncs:device/ncs:name";
+        }
+        /* must "starts-with(current(),'PE')" {
+          error-message "Only PE devices can be selected";
+        } */
+      }
+      leaf routing-protocol {
+        tailf:info "Routing option for the PE-CE link.";
+        type enumeration {
+          enum bgp;
+          enum rip;
+        }
+        default bgp;
+      }
+      leaf pe-ip {
+        tailf:info "PE-CE Link IP address.";
+        type inet:ipv4-address;
+      }
+      leaf ce-ip {
+        tailf:info "CE Neighbor IP address.";
+        when "../routing-protocol='bgp'";
+        type inet:ipv4-address;
+      }
+      leaf rip-net {
+        tailf:info "IP Network for RIP.";
+        when "../routing-protocol='rip'";
+        type inet:ipv4-address;
+      }
+      leaf interface {
+        tailf:info "Customer Facing Interface";
+        mandatory true;
+        type string;
+        must "count(../../../l3vpndynid[name != current()/../../name]/link[device = current()/../device]/interface = current()) = 0" {
+          error-message "Interface is already used for another link";
+        }
+      }
+    }
+  }
+}
